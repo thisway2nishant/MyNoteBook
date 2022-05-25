@@ -4,6 +4,7 @@ const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fetchuser = require('../middleware/fetchuser')
 require('dotenv').config();
 
 
@@ -90,5 +91,21 @@ router.post(
     }
 
   } 
+)
+
+// Get user data. login required.
+router.post(
+  "/getUser",
+  fetchuser,
+  async (req, res) => {
+    try {
+      userId = req.user.id;
+      const user = await User.findById(userId).select("-password")
+      res.send(user);
+    } catch(error){
+      console.error(error);
+      res.status(500).send("Some error occured.")
+    }
+  }
 )
 module.exports = router;
