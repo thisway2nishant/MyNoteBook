@@ -5,10 +5,11 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const privateKey = "pagalhaikya";
 
+
+//create a new user and save to database. no login required.
 router.post(
-  "/",
+  "/SignUp",
   [
     body("name", "Must be at least 3 characters long").isLength({ min: 3 }),
     body("email", "Enter a valid email").isEmail(),
@@ -42,10 +43,52 @@ router.post(
         }
     }
 
-    const authToken = jwt.sign(data, privateKey);
+    const authToken = jwt.sign(data, process.env.JWT_SIGN);
 
     res.json(authToken);
  }
 );
 
+// Login user with credentials. no login required.
+router.post(
+  "/login",
+  [
+    body("email", "Please enter a valid mail address.").isEmail(),
+    body("password", "Password can't be blank").exists(),
+  ],
+  async (req, res) => {
+    // Finds errors and returns bad request.
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array()});
+    }
+
+    const {email, password} = req.body;
+    try{
+    let user = await User.findOne({email});
+    if(!user){
+      return res.status(400).json({error: 'Please login with correct credentials'});
+    }
+
+    const passComp = await bcrypt.compare(password, user.password);
+    if(!passComp){
+      return res.status(400).json({error: 'Please login with correct credentials'});
+    }
+
+    const data = {
+      user:{
+          id: user.id
+      }
+    }
+
+    const authToken = jwt.sign(data, process.env.JWT_SIGN);
+    res.json(authToken);
+    }
+    catch(error){
+      console.error(error);
+      res.status(500).send("Some error occured.")
+    }
+
+  } 
+)
 module.exports = router;
