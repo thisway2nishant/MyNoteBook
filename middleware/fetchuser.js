@@ -1,10 +1,11 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+
 const fetchuser = (req,res,next)=>{
-  const token = req.header('authToken');
+  const token = req.header('Auth-Token');
   if(!token){
-      res.status(401).send({error: "Please authenticate using a valid token."})
+      res.status(401).send({error: "Token field can't be empty."})
   }
 
   try {
