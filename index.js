@@ -1,14 +1,14 @@
 const connectToMongo  = require('./db.js');
 const express = require('express');
 
-connectToMongo();
+connectToMongo();  // connected to database
 const app = express()
 const port = 3000
 
-app.use(express.json());
+app.use(express.json()); 
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/notes', require('./routes/notes'));
+app.use('/api/auth', require('./routes/auth')); //Authentication endpoints.
+app.use('/api/notes', require('./routes/notes')); // Notes CRUD endpoints.
 
 
 app.listen(port, () => {

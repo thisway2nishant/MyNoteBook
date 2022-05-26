@@ -8,7 +8,7 @@ const fetchuser = require('../middleware/fetchuser')
 require('dotenv').config();
 
 
-//create a new user and save to database. no login required.
+//POST:  create a new user and save to database. Endpoint: /api/auth/SignUp no login required.
 router.post(
   "/SignUp",
   [
@@ -18,39 +18,43 @@ router.post(
   ],
   async (req, res) => {
 
-    // Finds errors and returns bad request.
+    // Finds errors IN VALIDATION and returns bad request.
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Check if the user with email already exists.
+    // Check if the user with given email already exists.
     let user = await User.findOne({email: req.body.email});
     if(user){
         res.status(400).json({error: "Sorry, a user with this Email already exists."})
     }
-
+    // Hashing and salting the given password.
     const salt = await bcrypt.genSalt(10);
     const secPass = await bcrypt.hash(req.body.password, salt);
 
+    // creating new user.
     user = await User.create({
       name: req.body.name,
       email: req.body.email,
       password: secPass,
     })
+
+    //saving user id for jwt signing.
     const data = {
         user:{
             id: user.id
         }
     }
-
     const authToken = jwt.sign(data, process.env.JWT_SIGN);
 
     res.json(authToken);
  }
 );
 
-// Login user with credentials. no login required.
+//----------------------------------------------------------------------------------------------------------------//
+
+//post: Login user with credentials.Endpoint: /api/aith/login No login required.
 router.post(
   "/login",
   [
@@ -58,7 +62,8 @@ router.post(
     body("password", "Password can't be blank").exists(),
   ],
   async (req, res) => {
-    // Finds errors and returns bad request.
+
+    // Finds errors IN VALIDATION  and returns bad request.
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array()});
@@ -66,16 +71,19 @@ router.post(
 
     const {email, password} = req.body;
     try{
+    //Search if the user exists in DB and return error if not.
     let user = await User.findOne({email});
     if(!user){
       return res.status(400).json({error: 'Please login with correct credentials'});
     }
 
+    //Password authentiation and error returning
     const passComp = await bcrypt.compare(password, user.password);
     if(!passComp){
       return res.status(400).json({error: 'Please login with correct credentials'});
     }
 
+    // creating data for jwt signing.
     const data = {
       user:{
           id: user.id
@@ -93,14 +101,15 @@ router.post(
   } 
 )
 
-// Get user data. login required.
+//-----------------------------------------------------------------------------------------------------------------//
+
+//POST:  Get user data. Endpoint: /api/auth/getUser login required.
 router.post(
   "/getUser",
   fetchuser,
   async (req, res) => {
     try {
-      userId = req.user.id;
-      const user = await User.findById(userId).select("-password")
+      const user = await User.findById(req.user.id).select("-password")// Selct everythig except password
       res.send(user);
     } catch(error){
       console.error(error);
@@ -108,4 +117,6 @@ router.post(
     }
   }
 )
+
+//------------------------------------------------------------------------------------//
 module.exports = router;

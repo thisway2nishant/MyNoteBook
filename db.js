@@ -1,6 +1,6 @@
 
 const mongoose = require('mongoose');
-const mongoURI = "mongodb://127.0.0.1:27017/MyNoteBookDB"
+const mongoURI = "mongodb://127.0.0.1:27017/MyNoteBookDB" // URI TO DATABASE
 const connectToMongo = () => {
     mongoose.connect(mongoURI).then(()=>{
         console.log(`successfully connected`);
